@@ -166,8 +166,8 @@
 			/>
 		{/if}
 		{#if i < levels.length - 1}
-			{@const                          skips = levels.i(i + 1)!.skips_at_start}
-			{@const                          clears = cumulativeClears[i]!}
+			{@const skips = levels.i(i + 1)!.skips_at_start}
+			{@const clears = cumulativeClears[i]!}
 			{@render skipLine(
 				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
 				level.status === 'full_cleared',
