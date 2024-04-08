@@ -35,10 +35,15 @@
 			return;
 		}
 		if (!res.ok) {
+			const { message, details } = await res.json().catch(() => ({
+				message: 'Unexpected error',
+				details: 'API returned invalid JSON',
+			}));
 			levels.set_last({
 				url: crypto.randomUUID(),
 				status: 'error',
-				message: await res.text(),
+				message,
+				details,
 				skips_at_start: skips,
 			});
 			return;
@@ -166,8 +171,8 @@
 			/>
 		{/if}
 		{#if i < levels.length - 1}
-			{@const skips = levels.i(i + 1)!.skips_at_start}
-			{@const clears = cumulativeClears[i]!}
+			{@const      skips = levels.i(i + 1)!.skips_at_start}
+			{@const      clears = cumulativeClears[i]!}
 			{@render skipLine(
 				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
 				level.status === 'full_cleared',

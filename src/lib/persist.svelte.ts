@@ -14,6 +14,7 @@ type LevelOrError =
 	| {
 			status: 'error';
 			message: string;
+			details?: string;
 			skips_at_start: number;
 			url: string;
 	  }
