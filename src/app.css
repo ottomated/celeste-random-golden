@@ -6,3 +6,20 @@ body {
 	background: theme(colors.zinc.900);
 	color: white;
 }
+
+.btn {
+	background: white;
+	color: black;
+	padding: 0.25rem 0.5rem;
+	border-radius: 9999px;
+}
+.btn:enabled:hover {
+	transform: translateY(-1px);
+}
+.btn:enabled:active {
+	transform: translateY(2px);
+}
+
+.btn:disabled {
+	background: theme(colors.zinc.500);
+}

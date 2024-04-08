@@ -1,56 +1,195 @@
 <script lang="ts">
-	import NextStep from '$lib/components/NextStep.svelte';
-	import { trpc } from '$lib/trpc';
+	import Error from '$lib/components/Error.svelte';
+	import LevelBox from '$lib/components/LevelBox.svelte';
+	import {
+		persist_state,
+		persist_levels,
+		type Level,
+	} from '$lib/persist.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
+	import { plural } from '$lib/util';
+	import Loading from '$lib/components/Loading.svelte';
+	import Header from '$lib/components/Header.svelte';
 
-	const greeting = trpc.greeting.query({ name: 'the o7 stack' });
+	let initial_skips = persist_state('initial_skips', 1);
+
+	const levels = persist_levels();
+
+	const deltaSkips = {
+		full_cleared: 1,
+		skipped: -1,
+	};
+
+	let cancelAdd: AbortController | null = null;
+
+	async function addLevel(skips: number) {
+		levels.push({
+			url: crypto.randomUUID(),
+			status: 'loading',
+			skips_at_start: skips,
+		});
+		cancelAdd?.abort();
+		cancelAdd = new AbortController();
+		const res = await fetch('/api/random');
+		if (cancelAdd.signal.aborted) {
+			return;
+		}
+		if (!res.ok) {
+			levels.set_last({
+				url: crypto.randomUUID(),
+				status: 'error',
+				message: await res.text(),
+				skips_at_start: skips,
+			});
+			return;
+		}
+		const data = await res.json<Level>();
+		if (cancelAdd.signal.aborted) {
+			return;
+		}
+		levels.set_last({
+			...data,
+
+			skips_at_start: skips,
+			status: 'in_progress',
+		});
+	}
+	async function reroll() {
+		const error = levels.pop();
+		return addLevel(error?.skips_at_start ?? initial_skips.value);
+	}
+	async function nextLevel(status: Level['status']) {
+		const lastLevel = levels.last;
+		if (lastLevel?.status !== 'in_progress') return;
+		lastLevel.status = status;
+		const skipDelta = deltaSkips[status as keyof typeof deltaSkips] ?? 0;
+		await addLevel(lastLevel.skips_at_start + skipDelta);
+	}
+	async function gameOver() {
+		const level = levels.last;
+		if (!level) return;
+		level.status = 'failed';
+	}
+	const cumulativeClears = $derived.by(() => {
+		const cum: number[] = [];
+		let sum = 0;
+		for (const level of levels.array) {
+			if (level.status === 'cleared' || level.status === 'full_cleared') sum++;
+			cum.push(sum);
+		}
+		return cum;
+	});
+
+	function undo() {
+		cancelAdd?.abort();
+		if (levels.last?.status === 'failed') {
+			levels.last.status = 'in_progress';
+			return;
+		}
+		levels.pop();
+		const lastLevel = levels.last;
+		if (!lastLevel) return;
+		lastLevel.status = 'in_progress';
+	}
+
+	let container: HTMLElement;
+	$effect(() => {
+		levels.last;
+		const last = container?.lastElementChild as HTMLElement;
+		if (last) last.scrollIntoView({ behavior: 'smooth' });
+	});
 </script>
 
-<main class="flex h-screen flex-col items-center justify-center">
-	<img src="/favicon.png" class="w-32" alt="o7 Logo" />
-	<!--
-		Notice how there's no flash of `undefined` here: that's because of the
-		SSR in `+page.server.ts`! Try changing the `name` to see the difference.
-	-->
-	<h1 class="text-3xl font-bold">{$greeting.data}</h1>
-	<h2 class="my-6 text-2xl">Next Steps:</h2>
-	<div class="flex max-w-5xl justify-center gap-4 px-3">
-		<NextStep
-			title="Edit this page"
-			learnMore="https://svelte.dev/tutorial/basics"
-		>
-			<p>
-				Edit <code class="text-lime-300">src/routes/+page.svelte</code> to see your
-				changes live.
-			</p>
-			<p>
-				The source for these cards is in <code class="text-lime-300"
-					>src/lib/components/NextStep.svelte</code
-				>.
-			</p>
-			<p>
-				There's some global styling in <code class="text-lime-300"
-					>src/app.css</code
-				>.
-			</p>
-		</NextStep>
-		<NextStep title="Create some tRPC routes" learnMore="https://trpc.io">
-			<p>
-				There's an example query in <code class="text-purple-300"
-					>src/lib/server/routes/_app.ts</code
-				>.
-			</p>
-			<p>
-				Also take a look at <code class="text-purple-300">
-					src/routes/+page.server.ts</code
-				> to see how server-side rendering works!
-			</p>
-		</NextStep>
+<svelte:window
+	onkeydown={(ev) => {
+		if (ev.key === 'z' && (ev.ctrlKey || ev.metaKey)) undo();
+	}}
+/>
+{#if levels.length > 0}
+	<div class="fixed text-zinc-50 bottom-0 left-0 m-2">
+		<kbd>CTRL</kbd> + <kbd>Z</kbd> to undo
 	</div>
-</main>
+{/if}
 
-<style>
-	code {
-		background: theme('colors.zinc.900');
-		padding: theme('spacing[0.5]');
-	}
-</style>
+{#snippet skipLine(text: string, plus1 = false)}
+	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
+	{#if plus1}
+		<p class="text-purple-400 mt-1">+1 SKIP</p>
+	{/if}
+	<p class="text-sm text-zinc-400 uppercase">{text}</p>
+	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
+{/snippet}
+
+<main
+	bind:this={container}
+	class="flex items-center flex-col max-w-screen-lg mx-auto p-8"
+>
+	<Header />
+	<label>
+		Start with skips:
+		<select
+			disabled={levels.length > 0}
+			class="bg-zinc-700 px-2 py-1"
+			bind:value={initial_skips.value}
+		>
+			{#each Array.from({ length: 11 }, (_, i) => i) as i}
+				<option value={i}>{i}</option>
+			{/each}
+		</select>
+	</label>
+
+	<button
+		class="btn"
+		disabled={levels.length > 0}
+		onclick={() => addLevel(initial_skips.value)}
+	>
+		Begin
+	</button>
+	{#if levels.length > 0}
+		{@render skipLine(
+			`Start, ${initial_skips.value} ${plural('skip', initial_skips.value)}`,
+		)}
+	{/if}
+	{#each levels.array as level, i (level.url)}
+		{#if level.status === 'error'}
+			<Error {level} onretry={reroll} />
+		{:else if level.status === 'loading'}
+			<Loading />
+		{:else}
+			<LevelBox
+				{level}
+				onreroll={reroll}
+				onclear={() => nextLevel('cleared')}
+				onfc={() => nextLevel('full_cleared')}
+				onskip={() => nextLevel('skipped')}
+				onfail={gameOver}
+			/>
+		{/if}
+		{#if i < levels.length - 1}
+			{@const                          skips = levels.i(i + 1)!.skips_at_start}
+			{@const                          clears = cumulativeClears[i]!}
+			{@render skipLine(
+				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
+				level.status === 'full_cleared',
+			)}
+		{/if}
+	{/each}
+	{#if levels.last?.status === 'failed'}
+		{@const clears = cumulativeClears[cumulativeClears.length - 1] ?? 0}
+		<div class="border-l border-zinc-400 border-dashed h-8 mt-1" />
+		<div class="text-center text-zinc-200 uppercase my-1">
+			<p class="text-red-400">Game Over!</p>
+			<p class="tabular-nums">Score: {clears} {plural('clear', clears)}.</p>
+		</div>
+		<button
+			class="btn my-2"
+			onclick={() => {
+				levels.clear();
+			}}
+		>
+			Play Again
+		</button>
+		<ShareButton levels={levels.array} initial_skips={initial_skips.value} />
+	{/if}
+	<div class="h-[300px]" />
+</main>
