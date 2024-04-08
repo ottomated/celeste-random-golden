@@ -1,4 +1,0 @@
-name = "celeste-endless"
-pages_build_output_dir = "./.svelte-kit/cloudflare"
-
-routes = [{ pattern = "celeste-endless.ottomated.net", custom_domain = true }]
