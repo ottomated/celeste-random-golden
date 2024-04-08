@@ -27,7 +27,7 @@ export const GET = async ({ url: myUrl }) => {
 	const authorCategories = Object.values(JSON.parse(data[1])) as Array<
 		[name: string]
 	>[];
-	const authors = authorCategories.flat().map((a) => a[0]);
+	const authors = [...new Set(authorCategories.flat().map((a) => a[0]))];
 
 	const screenshot = JSON.parse(data[2])[0]._sFile;
 
