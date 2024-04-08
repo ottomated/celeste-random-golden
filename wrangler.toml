@@ -1,0 +1,1 @@
+routes = [{ pattern = "celeste-endless.ottomated.net", custom_domain = true }]
