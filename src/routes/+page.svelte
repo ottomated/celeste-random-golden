@@ -144,7 +144,7 @@
 	</label>
 
 	<button
-		class="btn"
+		class="btn mt-2"
 		disabled={levels.length > 0}
 		onclick={() => addLevel(initial_skips.value)}
 	>
@@ -171,8 +171,8 @@
 			/>
 		{/if}
 		{#if i < levels.length - 1}
-			{@const      skips = levels.i(i + 1)!.skips_at_start}
-			{@const      clears = cumulativeClears[i]!}
+			{@const       skips = levels.i(i + 1)!.skips_at_start}
+			{@const       clears = cumulativeClears[i]!}
 			{@render skipLine(
 				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
 				level.status === 'full_cleared',

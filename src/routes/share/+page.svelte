@@ -24,7 +24,7 @@
 
 <main class="flex items-center flex-col max-w-screen-lg mx-auto p-8">
 	<Header />
-	<p class="text-black bg-zinc-500 px-2 py-1 rounded-full">Begin</p>
+	<p class="text-black bg-zinc-500 px-2 py-1 rounded-full mt-2">Begin</p>
 	{#if levels.length > 0}
 		{@render skipLine(
 			`Start, ${initial_skips} ${plural('skip', initial_skips)}`,
@@ -35,8 +35,8 @@
 			<LevelBox {level} />
 		{/if}
 		{#if i < levels.length - 1}
-			{@const skips = levels[i + 1]!.skips_at_start}
-			{@const clears = cumulativeClears[i]!}
+			{@const  skips = levels[i + 1]!.skips_at_start}
+			{@const  clears = cumulativeClears[i]!}
 			{@render skipLine(
 				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
 				level.status === 'full_cleared',

@@ -50,12 +50,12 @@
 				title="Reroll without using a skip (invalid map or already goldened)"
 				onclick={onreroll}
 				icon="refresh"
-				class="ml-auto whitespace-nowrap"
+				class="ml-auto w-16 shrink-0 whitespace-nowrap"
 			>
 				Bad map
 			</LevelButton>
 		{:else}
-			<div class="w-12 shrink-0 ml-auto" />
+			<div class="w-16 shrink-0 ml-auto" />
 		{/if}
 	</div>
 	<a href={level.url} target="_blank" class="w-full group">
@@ -91,7 +91,7 @@
 			</LevelButton>
 		{:else if level.status === 'failed'}
 			<LevelButton disabled icon="skull" class="text-red-400">
-				Game Over
+				Gave Up
 			</LevelButton>
 		{/if}
 	</div>

@@ -1,4 +1,4 @@
-<div class="flex gap-4 items-center">
+<div class="flex gap-4 items-center mb-4">
 	<svg width="60" height="60" viewBox="0 0 60 60">
 		<g fill="#fff">
 			<path
