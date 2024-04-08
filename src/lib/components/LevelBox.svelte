@@ -20,15 +20,18 @@
 
 <div class="p-4 relative w-96 bg-zinc-800 rounded-lg shadow-lg">
 	<div class="flex items-start gap-2 mb-2">
-		<a href={level.url} target="_blank">
-			<p class="text-2xl font-bold">
-				{level.name}
-				<svg
+		<div class="group">
+			<a
+				href={level.url}
+				target="_blank"
+				class="text-2xl font-bold group-hover:underline"
+			>
+				{level.name}<svg
 					width="16"
 					height="16"
 					viewBox="0 0 24 24"
 					fill="none"
-					class="stroke-zinc-200 inline"
+					class="stroke-zinc-200 inline ml-2"
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
@@ -37,29 +40,29 @@
 						d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"
 					/><path d="m21 3-9 9" /><path d="M15 3h6v6" />
 				</svg>
-			</p>
+			</a>
 			<p class="text-xs text-zinc-400 line-clamp-3">
 				{level.authors.join(', ')}
 			</p>
-		</a>
+		</div>
 		{#if level.status === 'in_progress'}
 			<LevelButton
 				title="Reroll without using a skip (invalid map or already goldened)"
 				onclick={onreroll}
 				icon="refresh"
-				class="ml-auto"
+				class="ml-auto whitespace-nowrap"
 			>
-				Reroll
+				Bad map
 			</LevelButton>
 		{:else}
 			<div class="w-12 shrink-0 ml-auto" />
 		{/if}
 	</div>
-	<a href={level.url} target="_blank" class="w-full">
+	<a href={level.url} target="_blank" class="w-full group">
 		<img
 			src={level.thumbnail}
 			alt=""
-			class="w-full rounded-xl aspect-video object-cover"
+			class="w-full rounded-xl aspect-video object-cover group-hover:scale-[1.02] transition-transform"
 		/>
 	</a>
 	<div class="flex gap-4 justify-center pt-2">
