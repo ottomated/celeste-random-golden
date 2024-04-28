@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Error from '$lib/components/Error.svelte';
 	import LevelBox from '$lib/components/LevelBox.svelte';
+	import LevelButton from '$lib/components/LevelButton.svelte';
 	import {
 		persist_state,
 		persist_levels,
@@ -112,7 +113,14 @@
 />
 {#if levels.length > 0}
 	<div class="fixed text-zinc-50 bottom-0 left-0 m-2">
-		<kbd>CTRL</kbd> + <kbd>Z</kbd> to undo
+		{#if levels.last.status === 'in_progress'}
+			<LevelButton icon="skull" onclick={gameOver} class="text-red-300">
+				Give Up Early
+			</LevelButton>
+		{/if}
+		<p>
+			<kbd>CTRL</kbd> + <kbd>Z</kbd> to undo
+		</p>
 	</div>
 {/if}
 
@@ -171,8 +179,8 @@
 			/>
 		{/if}
 		{#if i < levels.length - 1}
-			{@const       skips = levels.i(i + 1)!.skips_at_start}
-			{@const       clears = cumulativeClears[i]!}
+			{@const               skips = levels.i(i + 1)!.skips_at_start}
+			{@const               clears = cumulativeClears[i]!}
 			{@render skipLine(
 				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
 				level.status === 'full_cleared',
