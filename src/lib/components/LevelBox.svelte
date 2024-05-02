@@ -24,6 +24,10 @@
 			<a
 				href={level.url}
 				target="_blank"
+				oncontextmenu={(ev) => {
+					ev.preventDefault();
+					ev.currentTarget.click();
+				}}
 				class="text-2xl font-bold group-hover:underline"
 			>
 				{level.name}<svg
@@ -58,7 +62,15 @@
 			<div class="w-16 shrink-0 ml-auto" />
 		{/if}
 	</div>
-	<a href={level.url} target="_blank" class="w-full group">
+	<a
+		href={level.url}
+		oncontextmenu={(ev) => {
+			ev.preventDefault();
+			ev.currentTarget.click();
+		}}
+		target="_blank"
+		class="w-full group"
+	>
 		<img
 			src={level.thumbnail}
 			alt=""
