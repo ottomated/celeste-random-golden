@@ -2,6 +2,7 @@
 	import { plural } from '$lib/util';
 	import LevelBox from '$lib/components/LevelBox.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import { type Level } from '$lib/persist.svelte.js';
 	const { data } = $props();
 	const { levels, initial_skips } = data.shareData;
 
@@ -13,7 +14,7 @@
 	}
 </script>
 
-{#snippet skipLine(text: string, status: string = 'cleared')}
+{#snippet skipLine(text: string, status: Level['status'])}
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
 	{#if status === 'full_cleared'}
 		<p class="text-purple-400 mt-1">+1 SKIP</p>
