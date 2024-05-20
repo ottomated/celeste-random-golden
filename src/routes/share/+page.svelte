@@ -13,14 +13,18 @@
 	}
 </script>
 
-{#snippet skipLine(text: string, plus1 = false)}
+{#snippet skipLine(text: string, status: string = 'cleared')}
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
-	{#if plus1}
+	{#if status === 'full_cleared'}
 		<p class="text-purple-400 mt-1">+1 SKIP</p>
+	{:else if status === 'skipped'}
+		<p class="text-yellow-400 mt-1">-1 SKIP</p>
 	{/if}
 	<p class="text-sm text-zinc-400 uppercase">{text}</p>
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
 {/snippet}
+
+
 
 <main class="flex items-center flex-col max-w-screen-lg mx-auto p-8">
 	<Header />
@@ -29,28 +33,28 @@
 		{@render skipLine(
 			`Start, ${initial_skips} ${plural('skip', initial_skips)}`,
 		)}
-	{/if}
-	{#each levels as level, i (level.url)}
-		{#if level.status !== 'error' && level.status !== 'loading'}
-			<LevelBox {level} />
+		{#each levels as level, i (level.url)}
+			{#if level.status !== 'error' && level.status !== 'loading'}
+				<LevelBox {level} />
+			{/if}
+			{#if i < levels.length - 1}
+				{@const  skips = levels[i + 1]!.skips_at_start}
+				{@const  clears = cumulativeClears[i]!}
+				{@render skipLine(
+					`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
+					level.status,
+				)}
+			{/if}
+		{/each}
+		{#if levels.last?.status === 'failed'}
+			{@const clears = cumulativeClears[cumulativeClears.length - 1] ?? 0}
+			<div class="border-l border-zinc-400 border-dashed h-8 mt-1" />
+			<div class="text-center text-zinc-200 uppercase my-1">
+				<p class="text-red-400">Game Over!</p>
+				<p class="tabular-nums">Score: {clears} {plural('clear', clears)}.</p>
+			</div>
+			<a href="/" class="btn">Play</a>
 		{/if}
-		{#if i < levels.length - 1}
-			{@const  skips = levels[i + 1]!.skips_at_start}
-			{@const  clears = cumulativeClears[i]!}
-			{@render skipLine(
-				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
-				level.status === 'full_cleared',
-			)}
-		{/if}
-	{/each}
-	{#if levels[levels.length - 1]?.status === 'failed'}
-		{@const clears = cumulativeClears[cumulativeClears.length - 1] ?? 0}
-		<div class="border-l border-zinc-400 border-dashed h-8 mt-1" />
-		<div class="text-center text-zinc-200 uppercase my-1">
-			<p class="text-red-400">Game Over!</p>
-			<p class="tabular-nums">Score: {clears} {plural('clear', clears)}.</p>
-		</div>
-		<a href="/" class="btn">Play</a>
 	{/if}
 	<div class="h-[300px]" />
 </main>
