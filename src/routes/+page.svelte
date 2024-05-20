@@ -64,11 +64,16 @@
 		const error = levels.pop();
 		return addLevel(error?.skips_at_start ?? initial_skips.value);
 	}
+
+	function getDeltaSkip(status: Level['status']) {
+		return deltaSkips[status as keyof typeof deltaSkips] ?? 0;
+	}
+
 	async function nextLevel(status: Level['status']) {
 		const lastLevel = levels.last;
 		if (lastLevel?.status !== 'in_progress') return;
 		lastLevel.status = status;
-		const skipDelta = deltaSkips[status as keyof typeof deltaSkips] ?? 0;
+		const skipDelta = getDeltaSkip(status);
 		await addLevel(lastLevel.skips_at_start + skipDelta);
 	}
 	async function gameOver() {
@@ -124,10 +129,12 @@
 	</div>
 {/if}
 
-{#snippet skipLine(text: string, plus1 = false)}
+{#snippet skipLine(text: string, deltaSkips = 0)}
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
-	{#if plus1}
-		<p class="text-purple-400 mt-1">+1 SKIP</p>
+	{#if deltaSkips > 0}
+		<p class="text-purple-400 mt-1">+{deltaSkips} {plural('SKIP', deltaSkips).toUpperCase()}</p>
+	{:else if deltaSkips < 0}
+		<p class="text-yellow-400 mt-1">{deltaSkips} {plural('SKIP', deltaSkips).toUpperCase()}</p>
 	{/if}
 	<p class="text-sm text-zinc-400 uppercase">{text}</p>
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
@@ -162,47 +169,47 @@
 		{@render skipLine(
 			`Start, ${initial_skips.value} ${plural('skip', initial_skips.value)}`,
 		)}
-	{/if}
-	{#each levels.array as level, i (level.url)}
-		{#if level.status === 'error'}
-			<Error {level} onretry={reroll} />
-		{:else if level.status === 'loading'}
-			<Loading />
-		{:else}
-			<LevelBox
-				{level}
-				onreroll={reroll}
-				onclear={() => nextLevel('cleared')}
-				onfc={() => nextLevel('full_cleared')}
-				onskip={() => nextLevel('skipped')}
-				onfail={gameOver}
-			/>
+		{#each levels.array as level, i (level.url)}
+			{#if level.status === 'error'}
+				<Error {level} onretry={reroll} />
+			{:else if level.status === 'loading'}
+				<Loading />
+			{:else}
+				<LevelBox
+					{level}
+					onreroll={reroll}
+					onclear={() => nextLevel('cleared')}
+					onfc={() => nextLevel('full_cleared')}
+					onskip={() => nextLevel('skipped')}
+					onfail={gameOver}
+				/>
+			{/if}
+			{#if i < levels.length - 1}
+				{@const               skips = levels.i(i + 1)!.skips_at_start}
+				{@const               clears = cumulativeClears[i]!}
+				{@render skipLine(
+					`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
+					getDeltaSkip(level.status),
+				)}
+			{/if}
+		{/each}
+		{#if levels.last?.status === 'failed'}
+			{@const clears = cumulativeClears[cumulativeClears.length - 1] ?? 0}
+			<div class="border-l border-zinc-400 border-dashed h-8 mt-1" />
+			<div class="text-center text-zinc-200 uppercase my-1">
+				<p class="text-red-400">Game Over!</p>
+				<p class="tabular-nums">Score: {clears} {plural('clear', clears)}.</p>
+			</div>
+			<button
+				class="btn my-2"
+				onclick={() => {
+					levels.clear();
+				}}
+			>
+				Play Again
+			</button>
+			<ShareButton levels={levels.array} initial_skips={initial_skips.value} />
 		{/if}
-		{#if i < levels.length - 1}
-			{@const               skips = levels.i(i + 1)!.skips_at_start}
-			{@const               clears = cumulativeClears[i]!}
-			{@render skipLine(
-				`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
-				level.status === 'full_cleared',
-			)}
-		{/if}
-	{/each}
-	{#if levels.last?.status === 'failed'}
-		{@const clears = cumulativeClears[cumulativeClears.length - 1] ?? 0}
-		<div class="border-l border-zinc-400 border-dashed h-8 mt-1" />
-		<div class="text-center text-zinc-200 uppercase my-1">
-			<p class="text-red-400">Game Over!</p>
-			<p class="tabular-nums">Score: {clears} {plural('clear', clears)}.</p>
-		</div>
-		<button
-			class="btn my-2"
-			onclick={() => {
-				levels.clear();
-			}}
-		>
-			Play Again
-		</button>
-		<ShareButton levels={levels.array} initial_skips={initial_skips.value} />
 	{/if}
 	<div class="h-[300px]" />
 </main>
