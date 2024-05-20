@@ -64,11 +64,16 @@
 		const error = levels.pop();
 		return addLevel(error?.skips_at_start ?? initial_skips.value);
 	}
+
+	function getDeltaSkip(status: Level['status']) {
+		return deltaSkips[status as keyof typeof deltaSkips] ?? 0;
+	}
+
 	async function nextLevel(status: Level['status']) {
 		const lastLevel = levels.last;
 		if (lastLevel?.status !== 'in_progress') return;
 		lastLevel.status = status;
-		const skipDelta = deltaSkips[status as keyof typeof deltaSkips] ?? 0;
+		const skipDelta = getDeltaSkip(status);
 		await addLevel(lastLevel.skips_at_start + skipDelta);
 	}
 	async function gameOver() {
@@ -124,16 +129,17 @@
 	</div>
 {/if}
 
-{#snippet skipLine(text: string, status: Level['status'])}
+{#snippet skipLine(text: string, deltaSkips = 0)}
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
-	{#if status === 'full_cleared'}
-		<p class="text-purple-400 mt-1">+1 SKIP</p>
-	{:else if status === 'skipped'}
-		<p class="text-yellow-400 mt-1">-1 SKIP</p>
+	{#if deltaSkips > 0}
+		<p class="text-purple-400 mt-1">+{deltaSkips} {plural('SKIP', deltaSkips).toUpperCase()}</p>
+	{:else if deltaSkips < 0}
+		<p class="text-yellow-400 mt-1">{deltaSkips} {plural('SKIP', deltaSkips).toUpperCase()}</p>
 	{/if}
 	<p class="text-sm text-zinc-400 uppercase">{text}</p>
 	<div class="border-l border-zinc-400 border-dashed h-8 my-1" />
 {/snippet}
+
 <main
 	bind:this={container}
 	class="flex items-center flex-col max-w-screen-lg mx-auto p-8"
@@ -183,7 +189,7 @@
 				{@const               clears = cumulativeClears[i]!}
 				{@render skipLine(
 					`${clears} ${plural('clear', clears)}, ${skips} ${plural('skip', skips)}`,
-					level.status,
+					getDeltaSkip(level.status),
 				)}
 			{/if}
 		{/each}
